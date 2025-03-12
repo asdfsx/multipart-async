@@ -8,6 +8,7 @@
 use std::fmt;
 use std::pin::Pin;
 use std::rc::Rc;
+use std::str::Utf8Error;
 use std::task::Poll::{self, *};
 use std::{mem, str};
 
@@ -218,8 +219,13 @@ where
 
                 trace!("decoding surrogate: {:?}", &surrogate[..width]);
 
-                self.string
-                    .push_str(str::from_utf8(&surrogate[..width]).map_err(Utf8)?);
+                match str::from_utf8(&surrogate[..width]) {
+                    Ok(s) => self.string.push_str(s),
+                    Err(e) => self.string.push_str(e.to_string().as_str()),
+                };
+
+                // self.string
+                //     .push_str(str::from_utf8(&surrogate[..width]).map_err(Utf8)?);
 
                 let (_, rem) = data.split_into(needed);
                 data = rem;
